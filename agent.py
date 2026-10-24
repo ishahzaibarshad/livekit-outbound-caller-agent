@@ -17,6 +17,8 @@ from livekit.agents import (
 from livekit.agents.pipeline import VoicePipelineAgent
 from livekit.plugins import deepgram, openai, silero
 
+from safety import require_e164_phone_number
+
 
 # load environment variables, this is optional, only used for local development
 load_dotenv(dotenv_path=".env.local")
@@ -33,13 +35,13 @@ _default_instructions = (
 
 async def entrypoint(ctx: JobContext):
     global _default_instructions, outbound_trunk_id
-    logger.info(f"connecting to room {ctx.room.name}")
+    # Validate metadata before connecting or starting a billable call.
+    phone_number = require_e164_phone_number(ctx.job.metadata)
+    logger.info("connecting to room %s", ctx.room.name)
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
 
     user_identity = "phone_user"
-    # the phone number to dial is provided in the job metadata
-    phone_number = ctx.job.metadata
-    logger.info(f"dialing {phone_number} to room {ctx.room.name}")
+    logger.info("starting outbound call in room %s", ctx.room.name)
 
     # look up the user's phone number and appointment details
     instructions = (
@@ -140,9 +142,7 @@ class CallActions(llm.FunctionContext):
         time: Annotated[str, "time of the appointment"],
     ):
         """Called when the user confirms their appointment on a specific date. Use this tool only when they are certain about the date and time."""
-        logger.info(
-            f"confirming appointment for {self.participant.identity} on {date} at {time}"
-        )
+        logger.info("appointment confirmation requested")
         return "reservation confirmed"
 
     @llm.ai_callable()
