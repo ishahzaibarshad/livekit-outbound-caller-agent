@@ -1,30 +1,35 @@
 # LiveKit SIP Outbound Caller Agent
 
-A Python voice-agent example that starts an outbound SIP call from a LiveKit room and runs a voice pipeline to confirm an appointment.
+A Python example that starts an outbound SIP call from a LiveKit room and runs a voice pipeline to confirm an appointment.
 
 ## What it demonstrates
 
-- Creates a SIP participant using a configured LiveKit outbound trunk
-- Receives the destination number through job metadata
-- Runs a voice pipeline using Deepgram `nova-2-phonecall` speech recognition, OpenAI language and speech services, and Silero VAD
-- Exposes function-call examples for ending a call, checking sample availability, confirming an appointment, and detecting voicemail
+- Creates a SIP participant using a configured LiveKit outbound trunk.
+- Reads the destination from LiveKit job metadata and validates it as E.164 before connecting or dialing.
+- Runs a voice pipeline with Deepgram `nova-2-phonecall` speech recognition, OpenAI language and speech services, and Silero VAD.
+- Includes function-call examples for ending a call, checking sample availability, confirming an appointment, and detecting voicemail.
 
-The appointment details and availability response are hard-coded examples in `agent.py`; they are not connected to a calendar or booking service. This repository’s existing README points to `kylecampbell/livekit-outbound-caller-agent` for its setup source. Keep that upstream attribution and clarify any local changes so the repository does not imply sole authorship of the example.
+Appointment details and availability are hard-coded examples; confirmation does not connect to a calendar or booking service. This repository is based on the example at [kylecampbell/livekit-outbound-caller-agent](https://github.com/kylecampbell/livekit-outbound-caller-agent); retain that upstream attribution and verify differences before presenting the implementation as original work.
 
 ## Setup
 
-Create a virtual environment and install the project requirements:
+Use Python 3.10 or newer:
 
 ```bash
 python -m venv .venv
 # Windows PowerShell: .venv\Scripts\Activate.ps1
 # macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
+cp .env.example .env.local
 ```
 
-Set `SIP_OUTBOUND_TRUNK_ID` and the LiveKit, Deepgram, and OpenAI credentials in a local `.env.local` file. Do not commit credentials or trunk secrets. The agent entry point is `agent.py`; configure a valid LiveKit SIP trunk before placing calls.
+Set `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `OPENAI_API_KEY`, `DEEPGRAM_API_KEY`, and `SIP_OUTBOUND_TRUNK_ID` in `.env.local`. The trunk ID must be configured before the worker starts. Dispatch jobs with an E.164 destination in their metadata. The agent can place billable calls; use only authorized test numbers and an appropriately configured trunk.
 
-## Stack
+## Tests
 
-Python · LiveKit Agents · LiveKit SIP · Deepgram · OpenAI · Silero VAD
+```bash
+python -m pip install -r requirements-test.txt
+python -m pytest -q tests
+```
 
+Tests do not place calls or exercise external provider services.
